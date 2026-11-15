@@ -1,0 +1,12 @@
+/* ==========================================================================
+   Navbar Component Scoped Styles (Isolated via Angular ViewEncapsulation)
+   Changes here will NOT affect other components.
+   ========================================================================== */
+
+:host {
+  display: block;
+}
+
+.navbar-wrapper {
+  box-shadow: 0 4px 20px -5px rgba(0, 0, 0, 0.5);
+}
