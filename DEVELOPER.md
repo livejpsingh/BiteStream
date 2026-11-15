@@ -11,12 +11,13 @@ Welcome to the **BiteStream Developer Guide**. This document contains comprehens
 3. [Quick Start & Local Environment](#-quick-start--local-environment)
 4. [Docker Compose Profiles & Workflows](#-docker-compose-profiles--workflows)
 5. [Centralized Observability & Logging Stack](#-centralized-observability--logging-stack)
-6. [Database Management & Migrations](#-database-management--migrations)
-7. [Apache Kafka Event Stream Architecture](#-apache-kafka-event-stream-architecture)
-8. [Redis Caching & Two-Step OTP Protocol](#-redis-caching--two-step-otp-protocol)
-9. [OpenAPI 3 / Swagger API Documentation](#-openapi-3--swagger-api-documentation)
-10. [Testing & Code Quality](#-testing--code-quality)
-11. [Git Workflow & CI/CD Pipelines](#-git-workflow--cicd-pipelines)
+6. [Angular Web UI Application](#-angular-web-ui-application-frontend)
+7. [Database Management & Migrations](#-database-management--migrations)
+8. [Apache Kafka Event Stream Architecture](#-apache-kafka-event-stream-architecture)
+9. [Redis Caching & Two-Step OTP Protocol](#-redis-caching--two-step-otp-protocol)
+10. [OpenAPI 3 / Swagger API Documentation](#-openapi-3--swagger-api-documentation)
+11. [Testing & Code Quality](#-testing--code-quality)
+12. [Git Workflow & CI/CD Pipelines](#-git-workflow--cicd-pipelines)
 
 ---
 
@@ -206,6 +207,45 @@ cd logging
 chmod +x start-logging.sh
 ./start-logging.sh
 ```
+
+---
+
+## 💻 Angular Web UI Application (`frontend/`)
+
+BiteStream features an enterprise frontend dashboard located under [`frontend/`](frontend/) built with **Angular (v22)** and **Tailwind CSS**.
+
+### 1. Component Architecture & Scoped CSS Standards
+To ensure new feature additions never break or bleed styles into existing components, the application enforces strict **Angular ViewEncapsulation**:
+- **Global Styles (`frontend/src/styles.css`)**: Holds Tailwind `@tailwind` directives, root design system CSS tokens (`--color-brand`), base utility classes (`.glass-card`, `.btn-brand`), and scrollbar rules.
+- **Component Styles (`*.component.css`)**: Isolated component-scoped styles using Angular's host-element tagging. Styles written for a new feature cannot impact other components.
+
+```
+frontend/src/app/
+├── core/                        # Singleton services & models
+│   ├── models/                  # Restaurant, Order, Delivery interfaces
+│   └── services/api.service.ts  # Backend API client with proxy & offline fallbacks
+├── shared/                      # Shared reusable UI primitives
+│   └── components/
+│       ├── navbar/              # Top navigation & system health badge
+│       ├── stats-bar/           # Platform metrics & counters
+│       └── otp-modal/           # Two-Step OTP verification modal
+└── features/                    # Independent feature components
+    ├── restaurant-catalog/      # 5 stores, menu items & dish picker
+    ├── order-placement/         # Distance slider (2-5km), queue ETA, order submission
+    └── live-dispatch-tracker/   # 20 riders fleet, state machine, Kafka event log
+```
+
+### 2. Running the Frontend Locally
+```bash
+cd frontend
+
+# Install npm dependencies
+npm install
+
+# Start development server with proxy forwarding (/api -> localhost:8080)
+npm start
+```
+The application will launch at [http://localhost:4200](http://localhost:4200).
 
 ---
 
