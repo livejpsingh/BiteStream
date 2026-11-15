@@ -188,6 +188,16 @@ java -jar target/food-delivery-kafka-1.0.0.jar
 
 ---
 
+## 📖 Interactive OpenAPI 3 / Swagger Documentation
+
+BiteStream provides fully interactive **OpenAPI 3 / Swagger UI** documentation out of the box:
+
+* **Swagger UI Interface**: [http://localhost:8080/swagger-ui.html](http://localhost:8080/swagger-ui.html)
+* **OpenAPI Specification (JSON)**: [http://localhost:8080/v3/api-docs](http://localhost:8080/v3/api-docs)
+* **OpenAPI Specification (YAML)**: [http://localhost:8080/v3/api-docs.yaml](http://localhost:8080/v3/api-docs.yaml)
+
+---
+
 ## 📡 REST API Walkthrough (cURL Examples)
 
 ### 1. View Available Restaurants (Cached in Redis)
