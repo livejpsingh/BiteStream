@@ -135,6 +135,25 @@ spec:
                 command: ["/bin/sh", "-c", "sleep 15"]
 ```
 
+### 3.2 CI/CD GitHub Actions Pipeline (`main` & `develop`)
+
+The repository enforces automated CI/CD for both `main` (production) and `develop` (staging) branches:
+
+* **Continuous Integration (`.github/workflows/ci.yml`)**:
+  - Triggers on `push` and `pull_request` targeting `main` and `develop`.
+  - Sets up Java 17 with Maven caching, executes all unit/integration tests (`./mvnw test`).
+  - Archives Surefire test reports and compiled JAR artifacts.
+  - Performs a Docker build test to ensure container packaging succeeds without regression.
+
+* **Continuous Deployment (`.github/workflows/cd.yml`)**:
+  - Triggers on `push` to `main` and `develop` (and manual `workflow_dispatch`).
+  - Resolves target environment dynamically:
+    - `develop` &rarr; `staging`
+    - `main` &rarr; `production`
+  - Builds and tags Docker container images with branch names, commit SHA, and `latest` (for production).
+  - Pushes images to GitHub Container Registry (`ghcr.io/${{ github.repository }}`).
+  - Executes deployment rollout for the resolved environment.
+
 ---
 
 ## 4. Observability & Health Monitoring

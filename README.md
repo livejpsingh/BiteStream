@@ -368,3 +368,15 @@ All unit tests validate:
 - Queue delays per pending order.
 - Secure 6-digit numeric OTP generation.
 - Redis key insertion, TTL management, and atomic one-time validation.
+
+---
+
+## 🚀 GitHub Actions CI/CD Pipeline
+
+BiteStream features production-ready GitHub Actions workflows configured for both **`main`** and **`develop`** branches:
+
+| Pipeline | Workflow File | Trigger Conditions | Branch & Environment Matrix | Key Responsibilities |
+| :--- | :--- | :--- | :--- | :--- |
+| **Continuous Integration (CI)** | [`.github/workflows/ci.yml`](.github/workflows/ci.yml) | `push`, `pull_request`, `workflow_dispatch` | **`main`** & **`develop`** | - JDK 17 (Temurin) + Maven cache<br>- Unit & integration test execution (`./mvnw clean test`)<br>- Surefire test report publishing<br>- Application JAR packaging & artifact archiving<br>- Docker multi-stage build validation |
+| **Continuous Deployment (CD)** | [`.github/workflows/cd.yml`](.github/workflows/cd.yml) | `push`, `workflow_dispatch` (manual) | `develop` &rarr; **Staging**<br>`main` &rarr; **Production** | - Target environment & tag resolution<br>- Docker Buildx container image build<br>- Multi-tag publication to GitHub Container Registry (GHCR)<br>- Staged environment rollout |
+
