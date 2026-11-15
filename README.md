@@ -1,6 +1,6 @@
 # BiteStream — Real-Time Event-Driven Food Delivery & Dispatch Platform
 
-**BiteStream** is a production-grade, event-driven food delivery and dispatch backend built with **Spring Boot 3**, **Apache Kafka** (KRaft mode), **PostgreSQL 16** (Hybrid POJO + JSONB) with **Flyway** migrations, and **Redis 7**.
+**BiteStream** is a production-grade, event-driven food delivery and dispatch backend built with **Spring Boot 4.1.2**, **Java 25 LTS**, **Apache Maven 3.10.0**, **Apache Kafka** (KRaft mode), **PostgreSQL 16** (Hybrid POJO + JSONB) with **Flyway** migrations, and **Redis 7**.
 
 The platform coordinates the entire food order lifecycle asynchronously:
 1. **Order Intake**: Customer places an order for a restaurant.
@@ -387,6 +387,6 @@ BiteStream features production-ready GitHub Actions workflows configured for bot
 
 | Pipeline | Workflow File | Trigger Conditions | Branch & Environment Matrix | Key Responsibilities |
 | :--- | :--- | :--- | :--- | :--- |
-| **Continuous Integration (CI)** | [`.github/workflows/ci.yml`](.github/workflows/ci.yml) | `push`, `pull_request`, `workflow_dispatch` | **`main`** & **`develop`** | - JDK 17 (Temurin) + Maven cache<br>- Unit & integration test execution (`./mvnw clean test`)<br>- Surefire test report publishing<br>- Application JAR packaging & artifact archiving<br>- Docker multi-stage build validation |
+| **Continuous Integration (CI)** | [`.github/workflows/ci.yml`](.github/workflows/ci.yml) | `push`, `pull_request`, `workflow_dispatch` | **`main`** & **`develop`** | - JDK 25 (Temurin) + Maven cache<br>- Unit & integration test execution (`./mvnw clean test`)<br>- Surefire test report publishing<br>- Application JAR packaging & artifact archiving<br>- Docker multi-stage build validation |
 | **Continuous Deployment (CD)** | [`.github/workflows/cd.yml`](.github/workflows/cd.yml) | `push`, `workflow_dispatch` (manual) | `develop` &rarr; **Staging**<br>`main` &rarr; **Production** | - Target environment & tag resolution<br>- Docker Buildx container image build<br>- Multi-tag publication to GitHub Container Registry (GHCR)<br>- Staged environment rollout |
 
