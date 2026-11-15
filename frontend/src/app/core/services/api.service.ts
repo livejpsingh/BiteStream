@@ -10,8 +10,8 @@ import { DeliveryAgent, OtpInspectResponse, OtpVerificationResponse } from '../m
 })
 export class ApiService {
   private http = inject(HttpClient);
-  private baseUrl = 'http://localhost:8080/api';
-  private actuatorUrl = 'http://localhost:8080/actuator';
+  private baseUrl = '/api';
+  private actuatorUrl = '/actuator';
 
   // --- Fallback Seed Data in case backend is offline during isolated UI dev ---
   private mockRestaurants: Restaurant[] = [

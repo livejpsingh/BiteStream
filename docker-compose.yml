@@ -106,6 +106,25 @@ services:
       - app-container
 
   # ============================================================================
+  # BiteStream Angular Web Dashboard UI Service
+  # ============================================================================
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: bitestream-frontend
+    restart: unless-stopped
+    ports:
+      - "4200:80"
+    depends_on:
+      - app
+    networks:
+      - bitestream-net
+    profiles:
+      - app-container
+      - frontend
+
+  # ============================================================================
   # Observability & Logging Stack (Profile: logging)
   # ============================================================================
   prometheus:
