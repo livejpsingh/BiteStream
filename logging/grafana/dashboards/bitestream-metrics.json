@@ -13,7 +13,7 @@
       "collapsed": false,
       "gridPos": { "h": 1, "w": 24, "x": 0, "y": 0 },
       "id": 100,
-      "title": "Application Overview & Health",
+      "title": "Application Health & Resource Utilization",
       "type": "row"
     },
     {
@@ -21,9 +21,13 @@
       "title": "Application Uptime",
       "type": "stat",
       "gridPos": { "h": 4, "w": 6, "x": 0, "y": 1 },
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus-ds"
+      },
       "targets": [
         {
-          "expr": "process_uptime_seconds{application=\"bitestream\"}",
+          "expr": "process_uptime_seconds{job=\"bitestream-app\"}",
           "refId": "A"
         }
       ],
@@ -39,9 +43,13 @@
       "title": "Process CPU Usage",
       "type": "gauge",
       "gridPos": { "h": 4, "w": 6, "x": 6, "y": 1 },
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus-ds"
+      },
       "targets": [
         {
-          "expr": "process_cpu_usage{application=\"bitestream\"} * 100",
+          "expr": "process_cpu_usage{job=\"bitestream-app\"} * 100",
           "refId": "A"
         }
       ],
@@ -66,9 +74,13 @@
       "title": "JVM Heap Memory Usage",
       "type": "gauge",
       "gridPos": { "h": 4, "w": 6, "x": 12, "y": 1 },
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus-ds"
+      },
       "targets": [
         {
-          "expr": "(jvm_memory_used_bytes{application=\"bitestream\",area=\"heap\"} / jvm_memory_max_bytes{application=\"bitestream\",area=\"heap\"}) * 100",
+          "expr": "(jvm_memory_used_bytes{area=\"heap\",job=\"bitestream-app\"} / jvm_memory_max_bytes{area=\"heap\",job=\"bitestream-app\"}) * 100",
           "refId": "A"
         }
       ],
@@ -93,9 +105,13 @@
       "title": "Active Live Threads",
       "type": "stat",
       "gridPos": { "h": 4, "w": 6, "x": 18, "y": 1 },
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus-ds"
+      },
       "targets": [
         {
-          "expr": "jvm_threads_live_threads{application=\"bitestream\"}",
+          "expr": "jvm_threads_live_threads{job=\"bitestream-app\"}",
           "refId": "A"
         }
       ],
@@ -110,17 +126,21 @@
       "collapsed": false,
       "gridPos": { "h": 1, "w": 24, "x": 0, "y": 5 },
       "id": 101,
-      "title": "HTTP Request Throughput & Performance",
+      "title": "HTTP Traffic & API Endpoints Performance (Triggered by Angular & REST)",
       "type": "row"
     },
     {
       "id": 5,
-      "title": "HTTP Requests per Second (Rate)",
+      "title": "HTTP Request Throughput by Endpoint (req/s)",
       "type": "timeseries",
       "gridPos": { "h": 8, "w": 12, "x": 0, "y": 6 },
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus-ds"
+      },
       "targets": [
         {
-          "expr": "sum by (uri, status) (rate(http_server_requests_seconds_count{application=\"bitestream\"}[1m]))",
+          "expr": "sum by (uri, status) (rate(http_server_requests_seconds_count[1m]))",
           "legendFormat": "{{uri}} ({{status}})",
           "refId": "A"
         }
@@ -136,18 +156,22 @@
     },
     {
       "id": 6,
-      "title": "HTTP Request Latency (P95 & P99)",
+      "title": "API Request Latency (P95 & P99)",
       "type": "timeseries",
       "gridPos": { "h": 8, "w": 12, "x": 12, "y": 6 },
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus-ds"
+      },
       "targets": [
         {
-          "expr": "histogram_quantile(0.95, sum(rate(http_server_requests_seconds_bucket{application=\"bitestream\"}[1m])) by (le))",
-          "legendFormat": "p95 Latency",
+          "expr": "histogram_quantile(0.95, sum(rate(http_server_requests_seconds_bucket[1m])) by (le))",
+          "legendFormat": "P95 Latency",
           "refId": "A"
         },
         {
-          "expr": "histogram_quantile(0.99, sum(rate(http_server_requests_seconds_bucket{application=\"bitestream\"}[1m])) by (le))",
-          "legendFormat": "p99 Latency",
+          "expr": "histogram_quantile(0.99, sum(rate(http_server_requests_seconds_bucket[1m])) by (le))",
+          "legendFormat": "P99 Latency",
           "refId": "B"
         }
       ],
@@ -164,7 +188,7 @@
       "collapsed": false,
       "gridPos": { "h": 1, "w": 24, "x": 0, "y": 14 },
       "id": 102,
-      "title": "Database Connection Pool (HikariCP)",
+      "title": "Database Connection Pool (PostgreSQL HikariCP)",
       "type": "row"
     },
     {
@@ -172,20 +196,24 @@
       "title": "HikariCP Connection Pool Status",
       "type": "timeseries",
       "gridPos": { "h": 7, "w": 24, "x": 0, "y": 15 },
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus-ds"
+      },
       "targets": [
         {
-          "expr": "hikaricp_connections_active{pool=\"HikariPool-1\"}",
+          "expr": "hikaricp_connections_active",
           "legendFormat": "Active Connections",
           "refId": "A"
         },
         {
-          "expr": "hikaricp_connections_idle{pool=\"HikariPool-1\"}",
+          "expr": "hikaricp_connections_idle",
           "legendFormat": "Idle Connections",
           "refId": "B"
         },
         {
-          "expr": "hikaricp_connections_pending{pool=\"HikariPool-1\"}",
-          "legendFormat": "Pending Connections",
+          "expr": "hikaricp_connections_pending",
+          "legendFormat": "Pending Threads Waiting for Connection",
           "refId": "C"
         }
       ],
@@ -199,12 +227,12 @@
   "refresh": "5s",
   "schemaVersion": 39,
   "style": "dark",
-  "tags": ["bitestream", "springboot", "prometheus", "jvm"],
+  "tags": ["bitestream", "springboot", "prometheus", "jvm", "angular"],
   "time": {
     "from": "now-15m",
     "to": "now"
   },
   "title": "BiteStream - Spring Boot Metrics & Observability",
   "uid": "bitestream-metrics",
-  "version": 1
+  "version": 2
 }
