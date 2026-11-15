@@ -164,27 +164,54 @@ The project contains two migration scripts executed automatically on startup:
 
 ## 🚀 How to Run
 
-### Step 1: Start Infrastructure with Docker Compose
-Run the pre-configured Kafka, PostgreSQL, and Redis containers:
+### Docker Compose Profiles Workflow
+
+BiteStream provides flexible Docker profiles to suit different development environments:
+
+| Workflow | Command | Components |
+|---|---|---|
+| **Infrastructure Only** | `docker compose up -d` | PostgreSQL (`5432`), Redis (`6379`), Kafka (`9092`/`9094`) |
+| **Full Stack in Docker** | `docker compose --profile app-container up -d` | Infra + BiteStream App (`8080`) |
+| **Full Stack + Observability** | `docker compose --profile app-container --profile logging up -d` | Infra + App + Prometheus (`9090`), Grafana (`3000`), Loki (`3100`), Promtail |
 
 ```bash
+# 1. Run full application stack inside Docker
+docker compose --profile app-container up -d
+
+# 2. Or run infrastructure in Docker and Spring Boot locally
 docker compose up -d
+./mvnw clean spring-boot:run
 ```
 
-Verify all services are healthy:
-- **Kafka**: `localhost:9094` (external) / `localhost:9092` (internal)
-- **PostgreSQL**: `localhost:5432` (`fooddelivery_db` / `fooddelivery` / `fooddelivery_password`)
-- **Redis**: `localhost:6379`
+---
 
-### Step 2: Run the Spring Boot Application
-```bash
-mvn clean spring-boot:run
+## 📊 Centralized Observability & Logging (Prometheus, Grafana, Loki)
+
+BiteStream includes an enterprise observability stack under [`logging/`](logging/):
+
+* **Grafana Portal**: [http://localhost:3000](http://localhost:3000) (Credentials: `admin` / `admin`)
+  * **JVM & Metrics Dashboard**: `BiteStream - Spring Boot Metrics & Observability`
+  * **Logs Dashboard**: `BiteStream - Centralized Logs & Audit`
+* **Prometheus Targets**: [http://localhost:9090/targets](http://localhost:9090/targets) (Scrapes `bitestream-app:8080/actuator/prometheus`)
+* **Loki Log Aggregator**: [http://localhost:3100/ready](http://localhost:3100/ready)
+* **Promtail Log Shipper**: Collects container logs & `/var/log/bitestream/*.log`
+
+To run the logging stack independently:
+```powershell
+# Windows
+.\logging\start-logging.ps1
+
+# Linux / macOS
+./logging/start-logging.sh
 ```
-*(Or package and run the JAR)*:
-```bash
-mvn clean package -DskipTests
-java -jar target/food-delivery-kafka-1.0.0.jar
-```
+
+---
+
+## 👨‍💻 Developer Guide & Contributor Documentation
+
+For architecture deep-dives, Kafka topic topologies, Redis OTP TTL rules, database migration workflows, and local developer setup, please refer to the complete handbook:
+
+👉 **[BiteStream Developer Guide (DEVELOPER.md)](DEVELOPER.md)**
 
 ---
 

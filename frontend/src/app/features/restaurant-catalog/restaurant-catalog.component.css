@@ -1,0 +1,11 @@
+/* ==========================================================================
+   Restaurant Catalog Scoped Styles (Isolated)
+   ========================================================================== */
+
+:host {
+  display: block;
+}
+
+.restaurant-catalog-wrapper {
+  margin-bottom: 2rem;
+}
