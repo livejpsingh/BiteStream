@@ -141,7 +141,7 @@ The repository enforces automated CI/CD for both `main` (production) and `develo
 
 * **Continuous Integration (`.github/workflows/ci.yml`)**:
   - Triggers on `push` and `pull_request` targeting `main` and `develop`.
-  - Sets up Java 17 with Maven caching, executes all unit/integration tests (`./mvnw test`).
+  - Sets up Java 25 with Maven caching, executes all unit/integration tests (`./mvnw test`).
   - Archives Surefire test reports and compiled JAR artifacts.
   - Performs a Docker build test to ensure container packaging succeeds without regression.
 

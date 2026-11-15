@@ -14,7 +14,7 @@ flowchart TD
         GW["REST API Gateway (Port 8080)"]
     end
 
-    subgraph AppCluster["Spring Boot 3 Core Services"]
+    subgraph AppCluster["Spring Boot 4 Core Services"]
         OC["Order Service"]
         ETA["ETA & Distance Engine"]
         DC["Delivery Dispatch Service"]
@@ -80,7 +80,7 @@ flowchart LR
     end
 
     subgraph FoodDeliveryPlatform["Food Delivery System Boundary"]
-        SpringBootApp["Spring Boot Backend Service\n[Java 17, Spring Boot 3.3.4]\nHandles REST endpoints, Kafka orchestrators, logistics algorithms"]
+        SpringBootApp["Spring Boot Backend Service\n[Java 25, Spring Boot 4.1.2]\nHandles REST endpoints, Kafka orchestrators, logistics algorithms"]
         Kafka["Apache Kafka Event Bus\n[Kafka 3.7 KRaft]\nMessage streaming broker for order & delivery events"]
         PostgresDB["PostgreSQL Database\n[Postgres 16]\nRelational entities & JSONB order payloads with Flyway"]
         RedisCache["Redis Distributed Cache\n[Redis 7]\nFast in-memory OTP TTL storage & menu cache"]
