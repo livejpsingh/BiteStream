@@ -1,16 +1,6 @@
 # BiteStream — Real-Time Event-Driven Food Delivery & Dispatch Platform
 
-[![Java 25 LTS](https://img.shields.io/badge/Java-25%20LTS-orange.svg?style=flat&logo=openjdk)](https://adoptium.net/)
-[![Spring Boot](https://img.shields.io/badge/Spring%20Boot-4.1.2-brightgreen.svg?style=flat&logo=springboot)](https://spring.io/projects/spring-boot)
-[![Angular](https://img.shields.io/badge/Angular-22-dd0031.svg?style=flat&logo=angular)](https://angular.dev/)
-[![Tailwind CSS](https://img.shields.io/badge/Tailwind%20CSS-3.4-38bdf8.svg?style=flat&logo=tailwindcss)](https://tailwindcss.com/)
-[![Apache Kafka](https://img.shields.io/badge/Apache%20Kafka-3.7.0%20(KRaft)-black.svg?style=flat&logo=apachekafka)](https://kafka.apache.org/)
-[![PostgreSQL](https://img.shields.io/badge/PostgreSQL-16%20(JSONB)-336791.svg?style=flat&logo=postgresql)](https://www.postgresql.org/)
-[![Redis](https://img.shields.io/badge/Redis-7%20(TTL%20OTP)-dc382d.svg?style=flat&logo=redis)](https://redis.io/)
-[![Grafana](https://img.shields.io/badge/Grafana-11.2-F46800.svg?style=flat&logo=grafana)](https://grafana.com/)
-[![Prometheus](https://img.shields.io/badge/Prometheus-2.54-E6522C.svg?style=flat&logo=prometheus)](https://prometheus.io/)
-
-**BiteStream** is a production-grade, event-driven food delivery and dispatch platform featuring a high-performance **Spring Boot 4.1.2** backend (Java 25 LTS, Maven 3.10.0), a modern **Angular 22** web console (Tailwind CSS, Nginx reverse proxy), **Apache Kafka** in KRaft mode, **PostgreSQL 16** (hybrid relational POJO + JSONB with GIN indexing), **Redis 7** (sub-millisecond TTL OTP store), and full-stack **Observability** (Prometheus, Grafana, Loki, Promtail).
+**BiteStream** is a production-grade, event-driven food delivery and dispatch backend built with **Spring Boot 4.1.2**, **Java 25 LTS**, **Apache Maven 3.10.0**, **Apache Kafka** (KRaft mode), **PostgreSQL 16** (Hybrid POJO + JSONB) with **Flyway** migrations, and **Redis 7**.
 
 The platform coordinates the entire food order lifecycle asynchronously:
 1. **Order Intake**: Customer places an order via the Angular Web UI or REST API.
