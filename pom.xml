@@ -6,7 +6,7 @@
     <parent>
         <groupId>org.springframework.boot</groupId>
         <artifactId>spring-boot-starter-parent</artifactId>
-        <version>3.3.4</version>
+        <version>4.1.2</version>
         <relativePath/>
     </parent>
     <groupId>com.fooddelivery</groupId>
@@ -16,8 +16,7 @@
     <description>BiteStream - Real-Time Event-Driven Food Delivery and Dispatch Platform powered by Apache Kafka, PostgreSQL (Hybrid POJO+JSONB), Redis Cache, and Two-Step OTP Verification</description>
 
     <properties>
-        <java.version>17</java.version>
-        <spring-kafka.version>3.2.4</spring-kafka.version>
+        <java.version>25</java.version>
         <lombok.version>1.18.48</lombok.version>
         <maven-surefire-plugin.version>3.5.6</maven-surefire-plugin.version>
         <springdoc-openapi.version>2.6.0</springdoc-openapi.version>
