@@ -1,0 +1,90 @@
+services:
+  # ============================================================================
+  # Prometheus: Metrics Collection & Time-Series Database
+  # ============================================================================
+  prometheus:
+    image: prom/prometheus:v2.54.1
+    container_name: bitestream-prometheus
+    restart: unless-stopped
+    ports:
+      - "9090:9090"
+    volumes:
+      - ./prometheus/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - prometheus_data:/prometheus
+    command:
+      - "--config.file=/etc/prometheus/prometheus.yml"
+      - "--storage.tsdb.path=/prometheus"
+      - "--web.console.libraries=/etc/prometheus/console_libraries"
+      - "--web.console.templates=/etc/prometheus/consoles"
+      - "--web.enable-lifecycle"
+    networks:
+      - bitestream-net
+
+  # ============================================================================
+  # Grafana Loki: High-Efficiency Log Aggregation Engine
+  # ============================================================================
+  loki:
+    image: grafana/loki:3.1.1
+    container_name: bitestream-loki
+    restart: unless-stopped
+    ports:
+      - "3100:3100"
+    volumes:
+      - ./loki/loki-config.yml:/etc/loki/local-config.yaml:ro
+      - loki_data:/loki
+    command: -config.file=/etc/loki/local-config.yaml
+    networks:
+      - bitestream-net
+
+  # ============================================================================
+  # Promtail: Log Shipper / Agent
+  # ============================================================================
+  promtail:
+    image: grafana/promtail:3.1.1
+    container_name: bitestream-promtail
+    restart: unless-stopped
+    volumes:
+      - ./promtail/promtail-config.yml:/etc/promtail/config.yml:ro
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+      - app_logs:/var/log/bitestream:ro
+    command: -config.file=/etc/promtail/config.yml
+    depends_on:
+      - loki
+    networks:
+      - bitestream-net
+
+  # ============================================================================
+  # Grafana: Unified Observability Dashboard
+  # ============================================================================
+  grafana:
+    image: grafana/grafana:11.2.0
+    container_name: bitestream-grafana
+    restart: unless-stopped
+    ports:
+      - "3000:3000"
+    environment:
+      - GF_SECURITY_ADMIN_USER=admin
+      - GF_SECURITY_ADMIN_PASSWORD=admin
+      - GF_USERS_ALLOW_SIGN_UP=false
+    volumes:
+      - ./grafana/provisioning/datasources:/etc/grafana/provisioning/datasources:ro
+      - ./grafana/provisioning/dashboards:/etc/grafana/provisioning/dashboards:ro
+      - ./grafana/dashboards:/etc/grafana/dashboards:ro
+      - grafana_data:/var/lib/grafana
+    depends_on:
+      - prometheus
+      - loki
+    networks:
+      - bitestream-net
+
+networks:
+  bitestream-net:
+    name: bitestream_bitestream-net
+    external: true
+
+volumes:
+  prometheus_data:
+  loki_data:
+  grafana_data:
+  app_logs:
+    name: bitestream_app_logs
