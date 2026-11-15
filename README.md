@@ -1,70 +1,102 @@
 # BiteStream — Real-Time Event-Driven Food Delivery & Dispatch Platform
 
-**BiteStream** is a production-grade, event-driven food delivery and dispatch backend built with **Spring Boot 4.1.2**, **Java 25 LTS**, **Apache Maven 3.10.0**, **Apache Kafka** (KRaft mode), **PostgreSQL 16** (Hybrid POJO + JSONB) with **Flyway** migrations, and **Redis 7**.
+[![Java 25 LTS](https://img.shields.io/badge/Java-25%20LTS-orange.svg?style=flat&logo=openjdk)](https://adoptium.net/)
+[![Spring Boot](https://img.shields.io/badge/Spring%20Boot-4.1.2-brightgreen.svg?style=flat&logo=springboot)](https://spring.io/projects/spring-boot)
+[![Angular](https://img.shields.io/badge/Angular-22-dd0031.svg?style=flat&logo=angular)](https://angular.dev/)
+[![Tailwind CSS](https://img.shields.io/badge/Tailwind%20CSS-3.4-38bdf8.svg?style=flat&logo=tailwindcss)](https://tailwindcss.com/)
+[![Apache Kafka](https://img.shields.io/badge/Apache%20Kafka-3.7.0%20(KRaft)-black.svg?style=flat&logo=apachekafka)](https://kafka.apache.org/)
+[![PostgreSQL](https://img.shields.io/badge/PostgreSQL-16%20(JSONB)-336791.svg?style=flat&logo=postgresql)](https://www.postgresql.org/)
+[![Redis](https://img.shields.io/badge/Redis-7%20(TTL%20OTP)-dc382d.svg?style=flat&logo=redis)](https://redis.io/)
+[![Grafana](https://img.shields.io/badge/Grafana-11.2-F46800.svg?style=flat&logo=grafana)](https://grafana.com/)
+[![Prometheus](https://img.shields.io/badge/Prometheus-2.54-E6522C.svg?style=flat&logo=prometheus)](https://prometheus.io/)
+
+**BiteStream** is a production-grade, event-driven food delivery and dispatch platform featuring a high-performance **Spring Boot 4.1.2** backend (Java 25 LTS, Maven 3.10.0), a modern **Angular 22** web console (Tailwind CSS, Nginx reverse proxy), **Apache Kafka** in KRaft mode, **PostgreSQL 16** (hybrid relational POJO + JSONB with GIN indexing), **Redis 7** (sub-millisecond TTL OTP store), and full-stack **Observability** (Prometheus, Grafana, Loki, Promtail).
 
 The platform coordinates the entire food order lifecycle asynchronously:
-1. **Order Intake**: Customer places an order for a restaurant.
-2. **Streaming Event Backbone**: Order event is streamed via Apache Kafka (`food.orders.placed`).
-3. **Kitchen & Dispatch Fan-Out**: Real-time consumers notify the restaurant kitchen queue and dispatch the optimal available agent from a fleet of **20 delivery partners** based on proximity.
-4. **Logistics & Queue Distance ETA**: Dynamically calculates preparation and transit delivery times based on distance bands (**2.0 km, 3.0 km, 4.0 km, 5.0 km**) and active store queue depth.
-5. **Two-Step OTP Security Protocol**: High-security handover powered by **Redis with native sub-millisecond TTL**:
-   - **Pickup OTP**: Shared between Delivery Agent and Restaurant upon food handover (15-min TTL).
-   - **Delivery OTP**: Shared between Customer and Delivery Agent upon doorstep packet delivery (30-min TTL).
+1. **Order Intake**: Customer places an order via the Angular Web UI or REST API.
+2. **Streaming Event Backbone**: Orders are published to Apache Kafka (`food.orders.placed`).
+3. **Kitchen & Dispatch Fan-Out**: Real-time Kafka consumers notify the restaurant kitchen queue and dispatch the optimal available rider from a fleet of **20 delivery partners** based on proximity and vehicle type.
+4. **Logistics & Distance ETA**: Dynamically calculates transit and kitchen prep times based on distance bands (**2.0 km, 3.0 km, 4.0 km, 5.0 km**) and active store queue depth.
+5. **Two-Step OTP Security Protocol**: High-security physical handover powered by **Redis with native sub-millisecond TTL**:
+   - **Pickup OTP**: Shared between Delivery Rider and Restaurant upon food handover (15-min TTL).
+   - **Delivery OTP**: Shared between Customer and Delivery Rider upon doorstep handover (30-min TTL).
+6. **Unified Observability**: All web traffic, backend event logs, and JVM metrics stream in real time to Prometheus, Grafana, and Loki.
 
 ---
 
 ## 🏛️ Architectural Overview
 
 ```
-                      +-----------------------------+
-                      |   Customer / Web Client     |
-                      +--------------+--------------+
-                                     |
-                          POST /api/orders (Distance: 2..5km)
-                                     v
-                      +-----------------------------+
-                      |     Order Service (REST)    |
-                      +--------------+--------------+
-                                     |
-                          Writes Order (POJO+JSONB)
-                                     v
-                      +-----------------------------+
-                      |    PostgreSQL Database      |
-                      +-----------------------------+
-                                     |
-                      Publishes 'food.orders.placed'
-                                     v
-                          +=====================+
-                          ||    APACHE KAFKA   ||
-                          +=====================+
-                         /                       \
-  Consumes 'food.orders.placed'             Consumes 'food.orders.placed'
-                       /                           \
-                      v                             v
-       +----------------------------+  +----------------------------+
-       | Restaurant Kitchen Consumer|  |  Delivery Dispatch Consumer |
-       +--------------+-------------+  +--------------+-------------+
-                      |                               |
-       Notifies store KOT & queue      Matches 1 of 20 Agents,
-       updates status: PREPARING       generates 6-digit Pickup OTP
-                      |                               |
-       Emits: 'food.restaurant.notif'  Emits: 'food.delivery.assigned'
-                                                      |
-                                                      v
-                                        +---------------------------+
-                                        |   Redis Distributed Cache |
-                                        |   (TTL-backed OTP Store)  |
-                                        +---------------------------+
-                                                      |
-                   ------------------------------------------------------
-                  |                                                      |
-                  v                                                      v
-        [Step 1: Restaurant Pickup]                          [Step 2: Customer Delivery]
-      POST /api/deliveries/{id}/pickup                     POST /api/deliveries/{id}/complete
-      Validates Pickup OTP from Redis                      Validates Delivery OTP from Redis
-      Emits 'food.delivery.pickup'                         Emits 'food.delivery.completed'
-      Generates Customer Delivery OTP                      Frees agent back to AVAILABLE
+                      +-------------------------------------------------+
+                      |     BiteStream Angular Dashboard (Port: 4200)   |
+                      |          (Tailwind CSS, Nginx Reverse Proxy)    |
+                      +------------------------+------------------------+
+                                               |
+                                     HTTP Requests (/api/*)
+                                               v
+                      +-------------------------------------------------+
+                      |     BiteStream Spring Boot Core (Port: 8080)    |
+                      |            (Java 25 LTS, Spring Boot 4.1.2)     |
+                      +-------------------+-----------------------------+
+                                          |
+                           Writes Order (POJO + JSONB)
+                                          v
+                      +-------------------------------------------------+
+                      |     PostgreSQL 16 Database (Port: 5432)         |
+                      |       (Hybrid Relational + GIN Indexed JSONB)   |
+                      +-------------------+-----------------------------+
+                                          |
+                           Publishes 'food.orders.placed'
+                                          v
+                              +=======================+
+                              ||     APACHE KAFKA     ||
+                              ||  (KRaft Mode :9092)  ||
+                              +=======================+
+                             /                         \
+      Consumes 'food.orders.placed'               Consumes 'food.orders.placed'
+                           /                             \
+                          v                               v
+           +-----------------------------+ +-----------------------------+
+           | Restaurant Kitchen Consumer | |  Delivery Dispatch Consumer |
+           +--------------+--------------+ +--------------+--------------+
+                          |                               |
+           Notifies store KOT queue,       Matches 1 of 20 fleet riders,
+           updates status: PREPARING       generates 6-digit Pickup OTP
+                          |                               |
+           Emits: 'food.restaurant.notif'  Emits: 'food.delivery.assigned'
+                                                          |
+                                                          v
+                                            +---------------------------+
+                                            |   Redis Distributed Cache |
+                                            |   (TTL-backed OTP Store)  |
+                                            +---------------------------+
+                                                          |
+                       ------------------------------------------------------
+                      |                                                      |
+                      v                                                      v
+            [Step 1: Restaurant Pickup]                          [Step 2: Customer Delivery]
+          POST /api/deliveries/{id}/pickup                     POST /api/deliveries/{id}/complete
+          Validates Pickup OTP from Redis                      Validates Delivery OTP from Redis
+          Emits 'food.delivery.pickup'                         Emits 'food.delivery.completed'
+          Generates Customer Delivery OTP                      Frees agent back to AVAILABLE
 ```
+
+---
+
+## 🌐 Stack Port Matrix & Live Endpoints
+
+| Service | Container Name | Host Port | Internal Port | Purpose / Default URL |
+|---|---|---|---|---|
+| **Angular Dashboard** | `bitestream-frontend` | **`4200`** | `80` | [http://localhost:4200](http://localhost:4200) (Web UI + Nginx Proxy) |
+| **Spring Boot API** | `bitestream-app` | **`8080`** | `8080` | [http://localhost:8080](http://localhost:8080) (Core Backend Engine) |
+| **Swagger UI** | `bitestream-app` | **`8080`** | `8080` | [http://localhost:8080/swagger-ui/index.html](http://localhost:8080/swagger-ui/index.html) |
+| **OpenAPI Docs** | `bitestream-app` | **`8080`** | `8080` | [http://localhost:8080/v3/api-docs](http://localhost:8080/v3/api-docs) |
+| **Grafana** | `bitestream-grafana` | **`3000`** | `3000` | [http://localhost:3000](http://localhost:3000) (`admin` / `admin`) |
+| **Prometheus** | `bitestream-prometheus` | **`9090`** | `9090` | [http://localhost:9090/targets](http://localhost:9090/targets) |
+| **Grafana Loki** | `bitestream-loki` | **`3100`** | `3100` | [http://localhost:3100/ready](http://localhost:3100/ready) |
+| **PostgreSQL 16** | `bitestream-postgres` | **`5432`** | `5432` | JDBC: `jdbc:postgresql://localhost:5432/postgres` |
+| **Redis 7** | `bitestream-redis` | **`6379`** | `6379` | In-memory OTP TTL store & menu cache |
+| **Apache Kafka** | `bitestream-kafka` | **`9092`**, **`9094`** | `9092` | KRaft Event Broker (External: `localhost:9094`) |
 
 ---
 
@@ -74,27 +106,31 @@ The platform coordinates the entire food order lifecycle asynchronously:
 
 | Dimension | Redis (Selected Choice ✅) | EHCache | Why Redis is Optimized for this Solution |
 | :--- | :--- | :--- | :--- |
-| **Architecture** | Distributed, out-of-process in-memory server | In-process JVM heap / local memory | Multiple Spring Boot replicas & Kafka consumers need shared access to the same OTPs and agent state without replication lag. |
+| **Architecture** | Distributed, out-of-process in-memory server | In-process JVM heap / local memory | Multiple Spring Boot replicas & Kafka consumers share the exact same OTP state and delivery rider fleet without replication delay. |
 | **OTP Expiration (TTL)** | Native key-level TTL eviction (`SETEX` / `PSETEX`) | Cache-level or manual entry expiry | Redis automatically purges expired OTPs after 15/30 minutes, avoiding custom scheduler sweeps and preventing brute force replay. |
 | **Concurrency & Atomic Ops** | Single-threaded atomic commands (`GETDEL`, Lua scripts) | Requires synchronization / locking | Guarantees atomic one-time consumption of Pickup and Delivery OTPs across concurrent microservices. |
-| **Geospatial & Fleet Tracking** | Built-in Geospatial indexes (`GEOADD`, `GEODIST`) | Not natively supported | Ideal for querying nearest available delivery agents to restaurants in sub-millisecond latency. |
+| **Geospatial Tracking** | Built-in Geospatial indexes (`GEOADD`, `GEODIST`) | Not natively supported | Ideal for querying nearest available delivery agents to restaurants with sub-millisecond latency. |
 | **Scalability** | Clustered independently from app instances | Constrained by JVM heap size & GC pauses | App restarts or deployments do not lose active OTPs or cached menus. |
 
 ### 2. Data Modeling: Hybrid Relational POJO + PostgreSQL JSONB
 
-Rather than choosing pure relational or pure document format, this solution adopts an **industry-standard hybrid design**:
-
-- **Relational POJO SQL Tables** for high-integrity transactional core:
+- **Relational POJO SQL Tables** for high-integrity transactional entities:
   - `restaurants`: Store metadata, location coordinates, contact numbers.
   - `menu_items`: Dish names, descriptions, prices, prep times.
   - `delivery_agents`: 20 pickup partners with status (`AVAILABLE`, `ASSIGNED`, `BUSY`), vehicle types, phone numbers.
-  - `orders` & `order_items`: Financial accounting, order items, foreign keys with strict constraints.
+  - `orders` & `order_items`: Financial accounting, items, foreign keys with strict constraints.
   - `delivery_assignments`: Links orders to assigned delivery partners.
 - **JSONB Columns** for flexible, semi-structured, and audit attributes:
-  - `orders.order_metadata` (`JSONB`): Stores customer instructions, dynamic discounts, tip amount, payment mode, and routing metadata without altering SQL schemas.
+  - `orders.order_metadata` (`JSONB`): Customer instructions, dynamic voucher discounts, payment mode, and routing metadata.
   - `orders.event_logs` (`JSONB`): Chronological, indexed audit log of every Kafka event state transition (`ORDER_PLACED`, `DELIVERY_ASSIGNED`, `PICKED_UP`, `DELIVERED`).
   - `restaurants.operating_hours` (`JSONB`): Variable weekly schedules and break timings per day.
-  - **Indexed with PostgreSQL GIN (Generalized Inverted Index)**: Enables lightning-fast querying on internal JSON attributes (`CREATE INDEX ... USING gin (order_metadata)`).
+  - **Indexed with PostgreSQL GIN (Generalized Inverted Index)**: Lightning-fast querying on internal JSON attributes.
+
+### 3. Frontend Architecture: Scoped Component CSS Isolation
+
+The Angular application ([`frontend/`](frontend/)) implements an industry-standard two-tier CSS structure:
+- **Global Styles (`frontend/src/styles.css`)**: Tailwind base directives, shared design tokens (`--color-brand`), and shared component classes (`.glass-card`, `.btn-brand`, `.badge-tag`).
+- **Scoped Styles (`*.component.css`)**: Angular's native `ViewEncapsulation.Emulated` isolates styles to each component host. New features can be added without bleeding into or breaking existing screens.
 
 ---
 
@@ -123,15 +159,15 @@ The application implements realistic logistics scheduling:
       │
       ▼
 2. Kafka Consumer assigns Delivery Partner & generates 6-digit PICKUP OTP
-      │ (Stored in Redis with 15-minute TTL)
+      │ (Stored in Redis with 15-minute TTL: otp:pickup:{orderId})
       ▼
 3. Delivery Partner arrives at Restaurant
       │ Partner provides Pickup OTP -> POST /api/deliveries/{orderId}/pickup
       ▼
 4. System verifies Pickup OTP with Redis
-      │ Invalids Pickup OTP
+      │ Invalids Pickup OTP atomically
       │ Changes Order Status -> PICKED_UP
-      │ Generates 6-digit DELIVERY OTP for Customer (Redis 30-min TTL)
+      │ Generates 6-digit DELIVERY OTP for Customer (Redis 30-min TTL: otp:delivery:{orderId})
       │ Emits 'food.delivery.pickup' event
       ▼
 5. Partner arrives at Customer doorstep (distance: 2, 3, 4, 5 km)
@@ -139,48 +175,58 @@ The application implements realistic logistics scheduling:
       ▼
 6. System verifies Delivery OTP with Redis
       │ Marks Order Status -> DELIVERED
-      │ Releases Delivery Agent -> AVAILABLE
+      │ Releases Delivery Agent back to -> AVAILABLE
       │ Emits 'food.delivery.completed' event
 ```
 
 ---
 
-## 🗄️ Flyway Database Migrations & Seed Data
+## 💻 Angular Web UI Dashboard (`frontend/`)
 
-The project contains two migration scripts executed automatically on startup:
+The web dashboard is located in [`frontend/`](frontend/) and provides an interactive control center:
 
-- **`V1__init_schema.sql`**: Creates tables, constraints, foreign keys, and PostgreSQL GIN indexes for JSONB columns.
-- **`V2__seed_data.sql`**: Seeds:
-  - **5 Stores / Restaurants**:
-    1. *Spice Symphony Gourmet* (North Indian & Mughlai)
-    2. *Bella Napoli Woodfire Pizzeria* (Authentic Italian)
-    3. *Dragon Wok Pan-Asian* (Chinese & Thai Street Food)
-    4. *Green Delight Organic & Salads* (Healthy Bowls & Vegan)
-    5. *Burger Crave Smokehouse* (Gourmet Burgers & BBQ)
-  - **10 Menu Items per Restaurant** (50 menu items total) with distinct names, descriptions, prices, and prep times.
-  - **20 Delivery Pickup Agents** with full names, phone numbers, vehicle types (*Electric Scooter, Honda Activa, Ather 450X, Yamaha FZ, etc.*), and initial coordinates.
+- **Store Catalog**: Interactive store picker showing 5 restaurants, cuisine badges, opening hours, and 10 dishes per restaurant with prep times.
+- **Order Placement Builder**: Interactive distance selector (**2.0 km, 3.0 km, 4.0 km, 5.0 km**), live ETA calculations, cart quantity adjustments, and direct Kafka order dispatch.
+- **Live Dispatch Tracker**:
+  - **Order State Machine**: Visual timeline tracking `ORDER_PLACED` &rarr; `KITCHEN_PREPARING` &rarr; `PICKED_UP` &rarr; `DELIVERED`.
+  - **Two-Step OTP Cards**: Active Redis OTP hints with one-click Auto-Fill and atomic verification.
+  - **Fleet Grid**: Live status of 20 delivery riders (Electric Scooter, Ather 450X, Yamaha FZ, Honda Activa).
+  - **Kafka Event Mesh**: Active topics and consumer group assignments.
+
+### Running the Frontend Locally (Dev Mode)
+```bash
+cd frontend
+npm install
+npm start
+```
+*Accessible at [http://localhost:4200](http://localhost:4200) with automatic proxy forwarding to `:8080`.*
 
 ---
 
-## 🚀 How to Run
+## 🐳 Docker Compose Profiles & Deployment
 
-### Docker Compose Profiles Workflow
+BiteStream provides flexible Docker profiles to suit different development and deployment needs:
 
-BiteStream provides flexible Docker profiles to suit different development environments:
-
-| Workflow | Command | Components |
+| Workflow | Command | Active Containers |
 |---|---|---|
 | **Infrastructure Only** | `docker compose up -d` | PostgreSQL (`5432`), Redis (`6379`), Kafka (`9092`/`9094`) |
-| **Full Stack in Docker** | `docker compose --profile app-container up -d` | Infra + BiteStream App (`8080`) |
-| **Full Stack + Observability** | `docker compose --profile app-container --profile logging up -d` | Infra + App + Prometheus (`9090`), Grafana (`3000`), Loki (`3100`), Promtail |
+| **Full Stack (App + UI)** | `docker compose --profile app-container up -d` | Infra + Spring Boot Backend (`8080`) + Angular Frontend (`4200`) |
+| **Full Stack + Observability** | `docker compose --profile app-container --profile logging up -d` | All 9 Containers: Infra + Backend + Frontend + Prometheus + Grafana + Loki + Promtail |
+| **Observability Only** | `docker compose --profile logging up -d` | Prometheus (`9090`), Grafana (`3000`), Loki (`3100`), Promtail |
 
 ```bash
-# 1. Run full application stack inside Docker
+# 1. Run complete stack (Backend + Frontend + Infrastructure)
 docker compose --profile app-container up -d
 
-# 2. Or run infrastructure in Docker and Spring Boot locally
-docker compose up -d
-./mvnw clean spring-boot:run
+# 2. Run complete stack with monitoring & centralized logging
+docker compose --profile app-container --profile logging up -d
+
+# 3. View live application logs
+docker logs -f bitestream-app
+docker logs -f bitestream-frontend
+
+# 4. Tear down stack
+docker compose --profile app-container --profile logging down
 ```
 
 ---
@@ -190,11 +236,15 @@ docker compose up -d
 BiteStream includes an enterprise observability stack under [`logging/`](logging/):
 
 * **Grafana Portal**: [http://localhost:3000](http://localhost:3000) (Credentials: `admin` / `admin`)
-  * **JVM & Metrics Dashboard**: `BiteStream - Spring Boot Metrics & Observability`
+  * **Metrics Dashboard**: `BiteStream - Spring Boot Metrics & Observability`
+    - Live JVM heap %, CPU %, thread counts, HikariCP database pool, and HTTP request throughput by URI.
   * **Logs Dashboard**: `BiteStream - Centralized Logs & Audit`
+    - Live Spring Boot backend log stream (`{job="bitestream-app"}`).
+    - Live Angular frontend / Nginx web traffic log stream (`{container="bitestream-frontend"}`).
+    - Full unified multi-container logs (`{container=~"bitestream-.*"}`).
 * **Prometheus Targets**: [http://localhost:9090/targets](http://localhost:9090/targets) (Scrapes `bitestream-app:8080/actuator/prometheus`)
 * **Loki Log Aggregator**: [http://localhost:3100/ready](http://localhost:3100/ready)
-* **Promtail Log Shipper**: Collects container logs & `/var/log/bitestream/*.log`
+* **Promtail Shipper**: Collects container logs & `/var/log/bitestream/*.log`
 
 To run the logging stack independently:
 ```powershell
@@ -207,21 +257,12 @@ To run the logging stack independently:
 
 ---
 
-## 👨‍💻 Developer Guide & Contributor Documentation
-
-For architecture deep-dives, Kafka topic topologies, Redis OTP TTL rules, database migration workflows, and local developer setup, please refer to the complete handbook:
-
-👉 **[BiteStream Developer Guide (DEVELOPER.md)](DEVELOPER.md)**
-
----
-
 ## 📖 Interactive OpenAPI 3 / Swagger Documentation
 
-BiteStream provides fully interactive **OpenAPI 3 / Swagger UI** documentation out of the box:
+BiteStream provides interactive OpenAPI 3 documentation out of the box:
 
-* **Swagger UI Interface**: [http://localhost:8080/swagger-ui.html](http://localhost:8080/swagger-ui.html)
+* **Swagger UI Interface**: [http://localhost:8080/swagger-ui/index.html](http://localhost:8080/swagger-ui/index.html)
 * **OpenAPI Specification (JSON)**: [http://localhost:8080/v3/api-docs](http://localhost:8080/v3/api-docs)
-* **OpenAPI Specification (YAML)**: [http://localhost:8080/v3/api-docs.yaml](http://localhost:8080/v3/api-docs.yaml)
 
 ---
 
@@ -255,165 +296,55 @@ curl -X POST http://localhost:8080/api/orders \
     "specialInstructions": "Extra spicy, please do not ring the doorbell",
     "paymentMethod": "UPI_GPAY",
     "items": [
-      {
-        "menuItemId": 1,
-        "quantity": 2
-      },
-      {
-        "menuItemId": 5,
-        "quantity": 3
-      }
+      { "menuItemId": 1, "quantity": 2 },
+      { "menuItemId": 5, "quantity": 3 }
     ]
   }'
 ```
 
-*Response:*
-```json
-{
-  "orderId": 1,
-  "orderNumber": "ORD-1763105000000-482",
-  "status": "PLACED",
-  "restaurantId": 1,
-  "restaurantName": "Spice Symphony Gourmet",
-  "customerName": "Rahul Verma",
-  "distanceKm": 3.0,
-  "queuePosition": 1,
-  "estimatedPrepTimeMinutes": 18,
-  "estimatedTravelTimeMinutes": 13,
-  "estimatedTotalDeliveryTimeMinutes": 31,
-  "totalAmount": 40.48,
-  "metadata": {
-    "specialInstructions": "Extra spicy, please do not ring the doorbell",
-    "paymentMethod": "UPI_GPAY",
-    "priority": "STANDARD"
-  }
-}
-```
-
-### 5. Inspect Generated OTPs (Inspection endpoint for testing)
+### 5. Inspect Active OTPs from Redis
 ```bash
 curl -X GET http://localhost:8080/api/deliveries/1/otp
 ```
-*Output:*
-```json
-{
-  "orderId": 1,
-  "activePickupOtpInRedis": "684920",
-  "activeDeliveryOtpInRedis": "EXPIRED_OR_NOT_ISSUED"
-}
-```
 
-### 6. Confirm Pickup with Pickup OTP
-Delivery agent arrives at restaurant and provides the Pickup OTP:
+### 6. Confirm Restaurant Pickup (Step 1 OTP)
 ```bash
 curl -X POST http://localhost:8080/api/deliveries/1/pickup \
   -H "Content-Type: application/json" \
-  -d '{
-    "otp": "684920"
-  }'
-```
-*Output:*
-```json
-{
-  "success": true,
-  "message": "Pickup confirmed successfully! Delivery partner is en route.",
-  "orderId": 1,
-  "orderNumber": "ORD-1763105000000-482",
-  "status": "PICKED_UP",
-  "deliveryAgentName": "Aarav Sharma",
-  "generatedDeliveryOtp": "512394",
-  "actionTimestamp": "2026-11-14T08:20:00Z"
-}
+  -d '{ "otp": "684920" }'
 ```
 
-### 7. Confirm Final Delivery with Customer Delivery OTP
-Delivery agent reaches customer's address (3.0 km away) and verifies Delivery OTP:
+### 7. Confirm Customer Doorstep Delivery (Step 2 OTP)
 ```bash
 curl -X POST http://localhost:8080/api/deliveries/1/complete \
   -H "Content-Type: application/json" \
-  -d '{
-    "otp": "512394"
-  }'
-```
-*Output:*
-```json
-{
-  "success": true,
-  "message": "Order delivered successfully to customer!",
-  "orderId": 1,
-  "orderNumber": "ORD-1763105000000-482",
-  "status": "DELIVERED",
-  "deliveryAgentName": "Aarav Sharma",
-  "actionTimestamp": "2026-11-14T08:33:00Z"
-}
-```
-
-### 8. View Order Audit Trail & JSONB Event Stream
-```bash
-curl -X GET http://localhost:8080/api/orders/1
-```
-Notice the `lifecycleEvents` array containing timestamps and sources for every Kafka event transition:
-```json
-"lifecycleEvents": [
-  {
-    "eventType": "ORDER_PLACED",
-    "topic": "food.orders.placed",
-    "timestamp": "2026-11-14T08:15:00Z",
-    "description": "Order created with Queue position #1, Distance 3.0 km",
-    "triggeredBy": "API_GATEWAY"
-  },
-  {
-    "eventType": "DELIVERY_ASSIGNED",
-    "topic": "food.delivery.assigned",
-    "timestamp": "2026-11-14T08:15:01Z",
-    "description": "Assigned partner Aarav Sharma (Electric Scooter). Pickup OTP generated.",
-    "triggeredBy": "DISPATCHER"
-  },
-  {
-    "eventType": "KITCHEN_PREPARING",
-    "topic": "food.restaurant.notifications",
-    "timestamp": "2026-11-14T08:15:02Z",
-    "description": "Store Spice Symphony Gourmet started cooking order. Position in queue: #1",
-    "triggeredBy": "RESTAURANT_KOT"
-  },
-  {
-    "eventType": "DELIVERY_PICKED_UP",
-    "topic": "food.delivery.pickup",
-    "timestamp": "2026-11-14T08:20:00Z",
-    "description": "Agent Aarav Sharma picked up order from restaurant. Customer Delivery OTP generated.",
-    "triggeredBy": "RESTAURANT_AGENT_APP"
-  },
-  {
-    "eventType": "ORDER_DELIVERED",
-    "topic": "food.delivery.completed",
-    "timestamp": "2026-11-14T08:33:00Z",
-    "description": "Order delivered successfully to customer by Aarav Sharma",
-    "triggeredBy": "CUSTOMER_AGENT_APP"
-  }
-]
+  -d '{ "otp": "512394" }'
 ```
 
 ---
 
-## 🧪 Testing
-Run the test suite covering distance calculations, queue scheduling penalties, and Redis OTP TTL validations:
+## 🧪 Testing & Quality Assurance
+
+Run the automated test suite covering logistics calculation, queue delay logic, and Redis OTP TTL validations:
 ```bash
-mvn test
+./mvnw clean test
 ```
-All unit tests validate:
-- 2, 3, 4, 5 km transit times.
-- Queue delays per pending order.
-- Secure 6-digit numeric OTP generation.
-- Redis key insertion, TTL management, and atomic one-time validation.
+
+---
+
+## 👨‍💻 Developer Guide & Contributor Handbook
+
+For deep-dive architecture specs, Kafka consumer groups, Flyway migrations, and code standards, refer to:
+
+👉 **[BiteStream Developer Guide (DEVELOPER.md)](DEVELOPER.md)**
 
 ---
 
 ## 🚀 GitHub Actions CI/CD Pipeline
 
-BiteStream features production-ready GitHub Actions workflows configured for both **`main`** and **`develop`** branches:
+BiteStream features production-ready GitHub Actions workflows for both **`main`** and **`develop`** branches:
 
 | Pipeline | Workflow File | Trigger Conditions | Branch & Environment Matrix | Key Responsibilities |
 | :--- | :--- | :--- | :--- | :--- |
 | **Continuous Integration (CI)** | [`.github/workflows/ci.yml`](.github/workflows/ci.yml) | `push`, `pull_request`, `workflow_dispatch` | **`main`** & **`develop`** | - JDK 25 (Temurin) + Maven cache<br>- Unit & integration test execution (`./mvnw clean test`)<br>- Surefire test report publishing<br>- Application JAR packaging & artifact archiving<br>- Docker multi-stage build validation |
 | **Continuous Deployment (CD)** | [`.github/workflows/cd.yml`](.github/workflows/cd.yml) | `push`, `workflow_dispatch` (manual) | `develop` &rarr; **Staging**<br>`main` &rarr; **Production** | - Target environment & tag resolution<br>- Docker Buildx container image build<br>- Multi-tag publication to GitHub Container Registry (GHCR)<br>- Staged environment rollout |
-
