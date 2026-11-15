@@ -1,0 +1,134 @@
+<div class="order-placement-wrapper glass-card p-5 border border-slate-800">
+  
+  <div class="flex items-center justify-between pb-3 border-b border-slate-800 mb-4">
+    <div>
+      <h3 class="text-base font-bold text-white flex items-center space-x-2">
+        <span>Order Builder & Logistics Dispatcher</span>
+      </h3>
+      <p class="text-xs text-slate-400">Dynamic travel time ETA and Kafka order streaming</p>
+    </div>
+    <span *ngIf="selectedRestaurant" class="text-xs font-semibold px-2.5 py-1 rounded bg-brand-500/20 text-brand-400 border border-brand-500/30">
+      {{ selectedRestaurant.name }}
+    </span>
+  </div>
+
+  <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+    
+    <!-- Left Column: Cart Items -->
+    <div class="lg:col-span-5 space-y-4">
+      <h4 class="text-xs uppercase font-bold tracking-wider text-slate-400">Selected Items ({{ cartItems.length }})</h4>
+
+      <div *ngIf="cartItems.length === 0" class="text-center py-8 rounded-lg bg-slate-900/40 border border-dashed border-slate-800 text-slate-400 text-xs">
+        <svg class="w-8 h-8 text-slate-600 mx-auto mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z"></path></svg>
+        Your cart is empty. Click "+ Add" on any dish above to start an order.
+      </div>
+
+      <div *ngIf="cartItems.length > 0" class="space-y-2 max-h-60 overflow-y-auto pr-1">
+        <div *ngFor="let c of cartItems" class="flex items-center justify-between p-2.5 rounded-lg bg-slate-900/60 border border-slate-800">
+          <div class="truncate pr-2">
+            <h6 class="text-xs font-semibold text-white truncate">{{ c.item.name }}</h6>
+            <p class="text-[11px] text-brand-400">${{ (c.item.price * c.quantity).toFixed(2) }} (${{ c.item.price }} ea)</p>
+          </div>
+          <div class="flex items-center space-x-2 shrink-0">
+            <button (click)="changeQuantity(c.item, -1)" class="w-6 h-6 rounded bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs flex items-center justify-center font-bold">-</button>
+            <span class="text-xs font-mono font-bold text-white w-4 text-center">{{ c.quantity }}</span>
+            <button (click)="changeQuantity(c.item, 1)" class="w-6 h-6 rounded bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs flex items-center justify-center font-bold">+</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Price Breakdown -->
+      <div *ngIf="cartItems.length > 0" class="pt-3 border-t border-slate-800 text-xs space-y-1">
+        <div class="flex justify-between text-slate-400">
+          <span>Subtotal</span>
+          <span>${{ totalAmount.toFixed(2) }}</span>
+        </div>
+        <div class="flex justify-between text-slate-400">
+          <span>Delivery Fee ({{ distanceKm }} km)</span>
+          <span>${{ (distanceKm * 0.8).toFixed(2) }}</span>
+        </div>
+        <div class="flex justify-between text-white font-bold pt-1 border-t border-slate-800 text-sm">
+          <span>Total Payable</span>
+          <span class="text-brand-400">${{ (totalAmount + (distanceKm * 0.8)).toFixed(2) }}</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Center/Right Column: Logistics Parameters & Customer Info -->
+    <div class="lg:col-span-7 space-y-4">
+      
+      <!-- Distance Selector & Dynamic ETA Calculation -->
+      <div class="p-4 rounded-xl bg-slate-900/60 border border-slate-800">
+        <div class="flex items-center justify-between mb-2">
+          <label class="text-xs font-bold uppercase tracking-wider text-slate-300">Delivery Distance (Logistics Band)</label>
+          <span class="text-xs font-bold text-brand-400 font-mono">{{ distanceKm.toFixed(1) }} KM</span>
+        </div>
+
+        <div class="grid grid-cols-4 gap-2 mb-3">
+          <button *ngFor="let opt of distanceOptions"
+                  (click)="distanceKm = opt"
+                  type="button"
+                  class="py-2 text-xs font-semibold rounded-lg border transition text-center"
+                  [ngClass]="distanceKm === opt
+                    ? 'bg-brand-600 text-white border-brand-500 shadow-md shadow-brand-900/30'
+                    : 'bg-slate-800 text-slate-300 border-slate-700 hover:bg-slate-700'">
+            {{ opt.toFixed(1) }} km
+          </button>
+        </div>
+
+        <!-- Real-Time ETA Matrix formula -->
+        <div class="grid grid-cols-3 gap-2 text-center pt-3 border-t border-slate-800/80">
+          <div class="bg-slate-950/60 p-2 rounded-lg border border-slate-800">
+            <span class="text-[10px] text-slate-400 block uppercase">Base Prep</span>
+            <span class="text-sm font-bold text-amber-400">{{ maxPrepTime }}m</span>
+          </div>
+          <div class="bg-slate-950/60 p-2 rounded-lg border border-slate-800">
+            <span class="text-[10px] text-slate-400 block uppercase">Transit ETA</span>
+            <span class="text-sm font-bold text-blue-400">{{ travelTimeMinutes }}m</span>
+          </div>
+          <div class="bg-slate-950/60 p-2 rounded-lg border border-slate-800">
+            <span class="text-[10px] text-slate-400 block uppercase">Total Delivery</span>
+            <span class="text-sm font-bold text-emerald-400">~{{ estimatedTotalEta }}m</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Customer Inputs -->
+      <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
+        <div>
+          <label class="block font-semibold text-slate-300 mb-1">Customer Name</label>
+          <input type="text" [(ngModel)]="customerName" class="w-full px-3 py-2 rounded-lg bg-slate-900 border border-slate-700 text-white focus:border-brand-500 outline-none" />
+        </div>
+        <div>
+          <label class="block font-semibold text-slate-300 mb-1">Phone Number</label>
+          <input type="text" [(ngModel)]="customerPhone" class="w-full px-3 py-2 rounded-lg bg-slate-900 border border-slate-700 text-white focus:border-brand-500 outline-none" />
+        </div>
+        <div class="sm:col-span-2">
+          <label class="block font-semibold text-slate-300 mb-1">Doorstep Address</label>
+          <input type="text" [(ngModel)]="customerAddress" class="w-full px-3 py-2 rounded-lg bg-slate-900 border border-slate-700 text-white focus:border-brand-500 outline-none" />
+        </div>
+        <div class="sm:col-span-2">
+          <label class="block font-semibold text-slate-300 mb-1">Special Cooking / Delivery Instructions</label>
+          <input type="text" [(ngModel)]="specialInstructions" class="w-full px-3 py-2 rounded-lg bg-slate-900 border border-slate-700 text-white focus:border-brand-500 outline-none" />
+        </div>
+      </div>
+
+      <!-- Error alert -->
+      <div *ngIf="errorMessage()" class="p-2.5 rounded-lg bg-rose-500/10 border border-rose-500/30 text-rose-400 text-xs">
+        {{ errorMessage() }}
+      </div>
+
+      <!-- Action Button -->
+      <button (click)="placeOrder()"
+              [disabled]="loading() || cartItems.length === 0"
+              class="w-full btn-brand py-3 text-sm flex items-center justify-center space-x-2">
+        <svg *ngIf="loading()" class="animate-spin w-4 h-4 text-white" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z"></path></svg>
+        <span *ngIf="!loading()">🚀 Dispatch Order via Apache Kafka</span>
+        <span *ngIf="loading()">Streaming to 'food.orders.placed'...</span>
+      </button>
+
+    </div>
+
+  </div>
+
+</div>

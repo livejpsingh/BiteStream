@@ -1,0 +1,52 @@
+<div class="min-h-screen bg-slate-950 text-slate-100 flex flex-col selection:bg-brand-500 selection:text-white">
+  
+  <!-- Global Navbar -->
+  <app-navbar></app-navbar>
+
+  <!-- Main Dashboard Container -->
+  <main class="flex-grow max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-6">
+    
+    <!-- Top Platform Stats Bar -->
+    <app-stats-bar [restaurantCount]="5"
+                   [menuItemCount]="50"
+                   [activeAgentCount]="20"
+                   [activeOrdersCount]="activeOrder() ? 1 : 0">
+    </app-stats-bar>
+
+    <!-- 1. Restaurant Catalog & Menu Selection Feature -->
+    <app-restaurant-catalog (addItem)="onDishSelected($event)"></app-restaurant-catalog>
+
+    <!-- 2. Order Placement & Logistics Calculation Feature -->
+    <app-order-placement [selectedRestaurant]="selectedRestaurant()"
+                         [cartItems]="cartItems()"
+                         (updateQuantity)="onUpdateQuantity($event)"
+                         (clearCart)="onClearCart()"
+                         (orderCreated)="onOrderPlaced($event)">
+    </app-order-placement>
+
+    <!-- 3. Real-Time Kafka Dispatch & Two-Step OTP Protocol Tracker Feature -->
+    <app-live-dispatch-tracker [currentOrder]="activeOrder()"
+                               (openOtpModal)="onOpenOtpModal($event)">
+    </app-live-dispatch-tracker>
+
+  </main>
+
+  <!-- Interactive 2-Step OTP Verification Modal -->
+  <app-otp-modal [isOpen]="otpModalOpen()"
+                 [orderId]="modalOrderId()"
+                 [orderNumber]="modalOrderNumber()"
+                 [stepType]="modalStepType()"
+                 [activeOtpHint]="modalActiveOtp()"
+                 (close)="otpModalOpen.set(false)"
+                 (otpConfirmed)="onOtpConfirmed($event)">
+  </app-otp-modal>
+
+  <!-- Global Footer -->
+  <footer class="border-t border-slate-800 bg-slate-900/60 py-6 mt-12 text-center text-xs text-slate-500">
+    <div class="max-w-7xl mx-auto px-4 flex flex-col sm:flex-row items-center justify-between gap-2">
+      <p>BiteStream • Event-Driven Food Delivery & Dispatch Platform</p>
+      <p class="text-slate-400">Powered by Spring Boot 4.1.2 • Java 25 LTS • Angular • Tailwind CSS • Apache Kafka • Redis • PostgreSQL</p>
+    </div>
+  </footer>
+
+</div>

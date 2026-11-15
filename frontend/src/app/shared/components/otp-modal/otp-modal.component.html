@@ -1,0 +1,70 @@
+<div *ngIf="isOpen" class="modal-backdrop fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/75 backdrop-blur-sm">
+  <div class="glass-card max-w-md w-full p-6 relative border border-slate-700 shadow-2xl">
+    
+    <!-- Close Button -->
+    <button (click)="closeModal()" class="absolute top-4 right-4 text-slate-400 hover:text-white p-1 rounded-lg hover:bg-slate-800 transition">
+      <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+    </button>
+
+    <!-- Header Badge & Icon -->
+    <div class="flex items-center space-x-3 mb-4">
+      <div class="w-12 h-12 rounded-xl flex items-center justify-center"
+           [ngClass]="stepType === 'PICKUP' ? 'bg-amber-500/20 text-amber-400 border border-amber-500/30' : 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30'">
+        <svg *ngIf="stepType === 'PICKUP'" class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z"></path></svg>
+        <svg *ngIf="stepType === 'DELIVERY'" class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+      </div>
+      <div>
+        <h3 class="text-lg font-bold text-white">
+          {{ stepType === 'PICKUP' ? 'Step 1: Store Pickup Handover' : 'Step 2: Customer Delivery Handover' }}
+        </h3>
+        <p class="text-xs text-slate-400">Order: {{ orderNumber || ('#' + orderId) }}</p>
+      </div>
+    </div>
+
+    <!-- Explanation Box -->
+    <div class="bg-slate-900/60 p-3 rounded-lg border border-slate-800 mb-4 text-xs text-slate-300 space-y-1">
+      <p *ngIf="stepType === 'PICKUP'">
+        <strong class="text-amber-400">Protocol:</strong> Delivery rider presents this OTP to restaurant kitchen staff to verify handover (15-min Redis TTL).
+      </p>
+      <p *ngIf="stepType === 'DELIVERY'">
+        <strong class="text-emerald-400">Protocol:</strong> Customer shares this OTP at doorstep to confirm packet handover (30-min Redis TTL).
+      </p>
+    </div>
+
+    <!-- Active Redis OTP Hint (Developer Aid) -->
+    <div *ngIf="activeOtpHint" class="bg-brand-950/40 border border-brand-500/30 p-2.5 rounded-lg mb-4 flex items-center justify-between">
+      <div>
+        <span class="text-[10px] uppercase font-bold text-brand-400 block tracking-wider">Active in Redis:</span>
+        <span class="text-lg font-mono font-bold tracking-widest text-brand-300">{{ activeOtpHint }}</span>
+      </div>
+      <button (click)="quickFill()" class="px-2 py-1 text-xs bg-brand-600/30 hover:bg-brand-600 text-brand-200 hover:text-white rounded border border-brand-500/30 transition">
+        Auto-Fill
+      </button>
+    </div>
+
+    <!-- Input Field -->
+    <div class="mb-4">
+      <label class="block text-xs font-semibold uppercase tracking-wider text-slate-300 mb-1.5">Enter 6-Digit OTP</label>
+      <input type="text"
+             [(ngModel)]="enteredOtp"
+             maxlength="6"
+             placeholder="e.g. 684920"
+             class="w-full text-center tracking-widest text-xl font-mono px-4 py-2.5 rounded-lg bg-slate-900 border border-slate-700 text-white focus:border-brand-500 focus:ring-1 focus:ring-brand-500 outline-none transition" />
+    </div>
+
+    <!-- Error Alert -->
+    <div *ngIf="errorMessage" class="p-2.5 mb-4 rounded-lg bg-rose-500/10 border border-rose-500/30 text-rose-400 text-xs">
+      {{ errorMessage }}
+    </div>
+
+    <!-- Action Buttons -->
+    <div class="flex items-center justify-end space-x-3">
+      <button (click)="closeModal()" class="btn-secondary text-sm">Cancel</button>
+      <button (click)="submitOtp()" [disabled]="loading" class="btn-brand text-sm">
+        <span *ngIf="loading">Verifying...</span>
+        <span *ngIf="!loading">Verify with Redis</span>
+      </button>
+    </div>
+
+  </div>
+</div>
