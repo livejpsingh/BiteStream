@@ -186,15 +186,48 @@ BiteStream includes a production-ready observability sub-project located at [`lo
 
 ### Pre-Configured Grafana Dashboards
 Located in [`logging/grafana/dashboards/`](file:///c:/workspace/public/BiteStream/logging/grafana/dashboards):
-1. **`BiteStream - Spring Boot Metrics & Observability`**:
-   - Real-time JVM memory heap usage & garbage collection pauses.
-   - HTTP throughput (requests/sec) and latency percentiles (P95, P99).
-   - HikariCP database pool active, idle, and pending connections.
-   - Process CPU usage and active thread counts.
-2. **`BiteStream - Centralized Logs & Audit`**:
-   - Centralized live log stream auto-scraped from Docker and Logback.
-   - Log volume categorized by level (`INFO`, `WARN`, `ERROR`).
-   - Filterable error search console with stack traces.
+1. **`BiteStream - Spring Boot Metrics & Observability` (`bitestream-metrics`)**:
+   - **Datasource**: `prometheus-ds` (Prometheus `:9090`).
+   - **JVM & Process Health**: Live Uptime, Process CPU %, JVM Heap Memory Used/Max %, and Active Thread counts.
+   - **API Throughput & Status Rates**: `sum by (uri, status) (rate(http_server_requests_seconds_count[1m]))` tracking `/api/orders`, `/api/restaurants`, `/api/delivery-agents`, and `/api/deliveries/*`.
+   - **Latency Percentiles**: P95 and P99 response time histograms.
+   - **HikariCP Database Pool**: Active, idle, and pending database connections.
+2. **`BiteStream - Centralized Logs & Audit` (`bitestream-logs`)**:
+   - **Datasource**: `loki-ds` (Grafana Loki `:3100`).
+   - **Log Volume Rate**: Real-time timeseries breakdown of logs by severity level (`INFO`, `WARN`, `ERROR`).
+   - **Total Errors**: Running counter of all exception and error events logged in the last 1 hour.
+   - **Backend Application Log Stream**: Live auto-scrolling log console streaming `/var/log/bitestream/bitestream.log` (`{job="bitestream-app"}`).
+   - **Frontend Traffic Log Stream**: Live Nginx access log console streaming web requests from Angular (`{container="bitestream-frontend"}`).
+   - **Full Stack Mesh Log Console**: Unified stream capturing all containers (`{container=~"bitestream-.*"}`).
+
+### Useful PromQL & LogQL Queries for Developers
+
+#### PromQL (Metrics)
+```promql
+# Rate of HTTP requests by URI and status
+sum by (uri, status) (rate(http_server_requests_seconds_count[1m]))
+
+# P95 Latency across all endpoints
+histogram_quantile(0.95, sum(rate(http_server_requests_seconds_bucket[1m])) by (le))
+
+# JVM Heap Memory Utilization %
+(jvm_memory_used_bytes{area="heap",job="bitestream-app"} / jvm_memory_max_bytes{area="heap",job="bitestream-app"}) * 100
+```
+
+#### LogQL (Logs)
+```logql
+# Backend Spring Boot application logs
+{job="bitestream-app"}
+
+# Angular Web UI / Nginx proxy traffic
+{container="bitestream-frontend"}
+
+# Filter backend errors with stack traces
+{job="bitestream-app"} |= "ERROR"
+
+# Track Kafka order event dispatching
+{job="bitestream-app"} |= "OrderPlacedEvent"
+```
 
 ### Independent Startup of Logging Sub-Project
 ```powershell
