@@ -1,0 +1,117 @@
+{
+  "annotations": {
+    "list": []
+  },
+  "editable": true,
+  "fiscalYearStartMonth": 0,
+  "graphTooltip": 1,
+  "id": null,
+  "links": [],
+  "liveNow": true,
+  "panels": [
+    {
+      "collapsed": false,
+      "gridPos": { "h": 1, "w": 24, "x": 0, "y": 0 },
+      "id": 100,
+      "title": "Log Rates & Health",
+      "type": "row"
+    },
+    {
+      "id": 1,
+      "title": "Log Volume by Level (Rate / 1m)",
+      "type": "timeseries",
+      "gridPos": { "h": 7, "w": 16, "x": 0, "y": 1 },
+      "datasource": {
+        "type": "loki",
+        "uid": "Loki"
+      },
+      "targets": [
+        {
+          "expr": "sum by (level) (count_over_time({job=~\"bitestream-app.*\"}[1m]))",
+          "legendFormat": "{{level}}",
+          "refId": "A"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "custom": {
+            "fillOpacity": 20
+          }
+        }
+      }
+    },
+    {
+      "id": 2,
+      "title": "Total Errors (Last 1 Hour)",
+      "type": "stat",
+      "gridPos": { "h": 7, "w": 8, "x": 16, "y": 1 },
+      "datasource": {
+        "type": "loki",
+        "uid": "Loki"
+      },
+      "targets": [
+        {
+          "expr": "sum(count_over_time({job=~\"bitestream-app.*\"} |= \"ERROR\" [1h]))",
+          "refId": "A"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "none",
+          "color": {
+            "mode": "thresholds"
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              { "color": "green", "value": null },
+              { "color": "yellow", "value": 1 },
+              { "color": "red", "value": 5 }
+            ]
+          }
+        }
+      }
+    },
+    {
+      "collapsed": false,
+      "gridPos": { "h": 1, "w": 24, "x": 0, "y": 8 },
+      "id": 101,
+      "title": "Live Centralized Application Logs",
+      "type": "row"
+    },
+    {
+      "id": 3,
+      "title": "BiteStream Application Log Stream",
+      "type": "logs",
+      "gridPos": { "h": 14, "w": 24, "x": 0, "y": 9 },
+      "datasource": {
+        "type": "loki",
+        "uid": "Loki"
+      },
+      "targets": [
+        {
+          "expr": "{job=~\"bitestream-app.*\"} | json",
+          "refId": "A"
+        }
+      ],
+      "options": {
+        "showLabels": true,
+        "wrapLogMessage": true,
+        "enableLogDetails": true,
+        "sortOrder": "Descending"
+      }
+    }
+  ],
+  "refresh": "5s",
+  "schemaVersion": 39,
+  "style": "dark",
+  "tags": ["bitestream", "logging", "loki", "grafana"],
+  "time": {
+    "from": "now-1h",
+    "to": "now"
+  },
+  "title": "BiteStream - Centralized Logs & Audit",
+  "uid": "bitestream-logs",
+  "version": 1
+}
