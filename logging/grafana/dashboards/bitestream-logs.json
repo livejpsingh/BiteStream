@@ -13,21 +13,21 @@
       "collapsed": false,
       "gridPos": { "h": 1, "w": 24, "x": 0, "y": 0 },
       "id": 100,
-      "title": "Log Rates & Health Summary",
+      "title": "Log Rates & Health",
       "type": "row"
     },
     {
       "id": 1,
-      "title": "Backend Log Volume by Level (Rate / 1m)",
+      "title": "Log Volume by Level (Rate / 1m)",
       "type": "timeseries",
-      "gridPos": { "h": 6, "w": 16, "x": 0, "y": 1 },
+      "gridPos": { "h": 7, "w": 16, "x": 0, "y": 1 },
       "datasource": {
         "type": "loki",
-        "uid": "loki-ds"
+        "uid": "Loki"
       },
       "targets": [
         {
-          "expr": "sum by (level) (count_over_time({job=\"bitestream-app\"}[1m]))",
+          "expr": "sum by (level) (count_over_time({job=~\"bitestream-app.*\"}[1m]))",
           "legendFormat": "{{level}}",
           "refId": "A"
         }
@@ -45,14 +45,14 @@
       "id": 2,
       "title": "Total Errors (Last 1 Hour)",
       "type": "stat",
-      "gridPos": { "h": 6, "w": 8, "x": 16, "y": 1 },
+      "gridPos": { "h": 7, "w": 8, "x": 16, "y": 1 },
       "datasource": {
         "type": "loki",
-        "uid": "loki-ds"
+        "uid": "Loki"
       },
       "targets": [
         {
-          "expr": "sum(count_over_time({job=\"bitestream-app\"} |= \"ERROR\" [1h]))",
+          "expr": "sum(count_over_time({job=~\"bitestream-app.*\"} |= \"ERROR\" [1h]))",
           "refId": "A"
         }
       ],
@@ -75,81 +75,23 @@
     },
     {
       "collapsed": false,
-      "gridPos": { "h": 1, "w": 24, "x": 0, "y": 7 },
+      "gridPos": { "h": 1, "w": 24, "x": 0, "y": 8 },
       "id": 101,
-      "title": "Live Backend Application Logs (Spring Boot / Kafka / JPA)",
+      "title": "Live Centralized Application Logs",
       "type": "row"
     },
     {
       "id": 3,
-      "title": "Spring Boot Backend Log Stream (/var/log/bitestream/bitestream.log)",
+      "title": "BiteStream Application Log Stream",
       "type": "logs",
-      "gridPos": { "h": 12, "w": 24, "x": 0, "y": 8 },
+      "gridPos": { "h": 14, "w": 24, "x": 0, "y": 9 },
       "datasource": {
         "type": "loki",
-        "uid": "loki-ds"
+        "uid": "Loki"
       },
       "targets": [
         {
-          "expr": "{job=\"bitestream-app\"}",
-          "refId": "A"
-        }
-      ],
-      "options": {
-        "showLabels": true,
-        "wrapLogMessage": true,
-        "enableLogDetails": true,
-        "sortOrder": "Descending"
-      }
-    },
-    {
-      "collapsed": false,
-      "gridPos": { "h": 1, "w": 24, "x": 0, "y": 20 },
-      "id": 102,
-      "title": "Live Frontend Web Traffic Logs (Angular / Nginx Access Logs)",
-      "type": "row"
-    },
-    {
-      "id": 4,
-      "title": "Angular Frontend Container & Reverse Proxy Traffic (Port 4200)",
-      "type": "logs",
-      "gridPos": { "h": 10, "w": 24, "x": 0, "y": 21 },
-      "datasource": {
-        "type": "loki",
-        "uid": "loki-ds"
-      },
-      "targets": [
-        {
-          "expr": "{container=\"bitestream-frontend\"}",
-          "refId": "A"
-        }
-      ],
-      "options": {
-        "showLabels": true,
-        "wrapLogMessage": true,
-        "enableLogDetails": true,
-        "sortOrder": "Descending"
-      }
-    },
-    {
-      "collapsed": false,
-      "gridPos": { "h": 1, "w": 24, "x": 0, "y": 31 },
-      "id": 103,
-      "title": "Unified Stack Container Logs (Postgres, Redis, Kafka, App, Frontend)",
-      "type": "row"
-    },
-    {
-      "id": 5,
-      "title": "All BiteStream Container Logs Stream",
-      "type": "logs",
-      "gridPos": { "h": 12, "w": 24, "x": 0, "y": 32 },
-      "datasource": {
-        "type": "loki",
-        "uid": "loki-ds"
-      },
-      "targets": [
-        {
-          "expr": "{container=~\"bitestream-.*\"}",
+          "expr": "{job=~\"bitestream-app.*\"} | json",
           "refId": "A"
         }
       ],
@@ -164,12 +106,12 @@
   "refresh": "5s",
   "schemaVersion": 39,
   "style": "dark",
-  "tags": ["bitestream", "logging", "loki", "grafana", "angular"],
+  "tags": ["bitestream", "logging", "loki", "grafana"],
   "time": {
     "from": "now-1h",
     "to": "now"
   },
   "title": "BiteStream - Centralized Logs & Audit",
   "uid": "bitestream-logs",
-  "version": 2
+  "version": 1
 }
