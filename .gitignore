@@ -1,0 +1,118 @@
+# ==============================================================================
+# BiteStream - Production-Grade .gitignore
+# ==============================================================================
+
+# ------------------------------------------------------------------------------
+# 1. Build & Compilation Artifacts (Maven & Java)
+# ------------------------------------------------------------------------------
+target/
+*.class
+*.jar
+*.war
+*.ear
+*.nar
+*.zip
+*.tar.gz
+*.rar
+
+# Maven specific
+pom.xml.tag
+pom.xml.releaseBackup
+pom.xml.versionsBackup
+pom.xml.next
+release.properties
+dependency-reduced-pom.xml
+buildNumber.properties
+.mvn/timing.properties
+.mvn/wrapper/maven-wrapper.jar
+
+# ------------------------------------------------------------------------------
+# 2. Testing & Coverage Reports
+# ------------------------------------------------------------------------------
+surefire-reports/
+failsafe-reports/
+test-output/
+*.dumpstream
+*.dump
+jacoco.exec
+*.exec
+
+# ------------------------------------------------------------------------------
+# 3. Environment Variables, Secrets & Credentials (NEVER COMMIT)
+# ------------------------------------------------------------------------------
+.env
+.env.*
+*.env
+!*.env.example
+!*.env.template
+*.key
+*.pem
+*.pkcs12
+*.p12
+*.pfx
+*.jks
+*.keystore
+*credentials*
+*secret*
+!AIDLC/07-SECURITY-DEPLOYMENT-GUIDE.md
+
+# ------------------------------------------------------------------------------
+# 4. Logs & Runtime Storage
+# ------------------------------------------------------------------------------
+*.log
+logs/
+*.tmp
+*.temp
+hs_err_pid*
+replay_pid*
+
+# ------------------------------------------------------------------------------
+# 5. Persistent Storage & Container Volumes (Docker / Databases)
+# ------------------------------------------------------------------------------
+postgres_data/
+kafka_data/
+redis_data/
+*.rdb
+dump.rdb
+
+# ------------------------------------------------------------------------------
+# 6. IDEs & Code Editors
+# ------------------------------------------------------------------------------
+# IntelliJ IDEA
+.idea/
+*.iml
+*.iws
+*.ipr
+out/
+
+# Visual Studio Code
+.vscode/
+*.code-workspace
+
+# Eclipse
+.apt_generated
+.classpath
+.factorypath
+.project
+.settings/
+.springBeans
+.sts4-cache
+
+# NetBeans
+/nbproject/private/
+/nbbuild/
+/dist/
+/nbdist/
+/.built-jar.properties
+
+# ------------------------------------------------------------------------------
+# 7. Operating System Files
+# ------------------------------------------------------------------------------
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+desktop.ini
